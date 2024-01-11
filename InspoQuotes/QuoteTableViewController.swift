@@ -46,6 +46,7 @@ class QuoteTableViewController: UITableViewController, SKPaymentTransactionObser
             return quotesToShow.count + 1
         }
     }
+    
     // show quotes in the cells
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         // cell with identifier of the cell
@@ -100,10 +101,9 @@ class QuoteTableViewController: UITableViewController, SKPaymentTransactionObser
         for transaction in transactions {
             if transaction.transactionState == .purchased {
                 // user payment succesful - finish transaction
+                print ("Transactions completed")
                 // function to show premium quotes
                 showPremiumQuotes()
-                // using the UserDefaults storage to check if the user already did the purchase in the past
-                UserDefaults.standard.set(true, forKey: productID)
                 // end transaction
                 SKPaymentQueue.default().finishTransaction(transaction)
             }
@@ -116,12 +116,23 @@ class QuoteTableViewController: UITableViewController, SKPaymentTransactionObser
                 }
                 // end transaction
                 SKPaymentQueue.default().finishTransaction(transaction)
-                
+            }
+            // check if transaction was restored (from restorePressed)
+            else if transaction.transactionState == .restored {
+                showPremiumQuotes()
+                print ("Transactions restored")
+                // hide the restore button once has been restored
+                navigationItem.setRightBarButton(nil, animated: true)                
+                // end transaction
+                SKPaymentQueue.default().finishTransaction(transaction)
             }
         }
     }
+    
     // func to show Premium Quotes
     func showPremiumQuotes() {
+        // using the UserDefaults storage to check if the user already did the purchase in the past
+        UserDefaults.standard.set(true, forKey: productID)
         // append the premiumQuotes to our quotes to show
         quotesToShow.append(contentsOf: premiumQuotes)
         tableView.reloadData()
@@ -144,7 +155,7 @@ class QuoteTableViewController: UITableViewController, SKPaymentTransactionObser
     }
         
         @IBAction func restorePressed(_ sender: UIBarButtonItem) {
-            
+            // restore transactions when clicked
+            SKPaymentQueue.default().restoreCompletedTransactions()
         }
-        
     }
