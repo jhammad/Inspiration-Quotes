@@ -1,10 +1,11 @@
 import UIKit
 import StoreKit // framework  of the StoreKit
 
-class QuoteTableViewController: UITableViewController {
+class QuoteTableViewController: UITableViewController, SKPaymentTransactionObserver { // SKPaymentTransactionObserver StoreKit protocol
+    
     
     let productID = "string of the productID of the developer"
-
+    
     var quotesToShow = [
         "Our greatest glory is not in never falling, but in rising every time we fall. — Confucius",
         "All our dreams can come true, if we have the courage to pursue them. – Walt Disney",
@@ -22,12 +23,14 @@ class QuoteTableViewController: UITableViewController {
         "Your true success in life begins only when you make the commitment to become excellent at what you do. — Brian Tracy",
         "Believe in yourself, take on your challenges, dig deep within yourself to conquer fears. Never let anyone bring you down. You got to keep going. – Chantal Sutherland"
     ]
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-     
+        // Add the current view controller as an observer to the default SKPaymentQueue.
+        // SKPaymentQueue is responsible for managing and processing in-app purchases.
+        SKPaymentQueue.default().add(self)
     }
-
+    
     // MARK: - Table view data source - to show the quotes
     // assign number of cells
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -65,7 +68,7 @@ class QuoteTableViewController: UITableViewController {
     
     
     // MARK: In-app purchases method
-    // fucntion to buy Premium Quotes 
+    // function to buy Premium Quotes
     func buyPremiumQuotes(){
         // class of StoreKit to make sure that the user can make payments
         if SKPaymentQueue.canMakePayments() {
@@ -78,11 +81,30 @@ class QuoteTableViewController: UITableViewController {
             print("User can't make payments")
         }
     }
-  
-
-    @IBAction func restorePressed(_ sender: UIBarButtonItem) {
+    // function to check payments (needs developer account) - It needs to be checked in a physical device also
+    func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+        // loop in all the availables transactions
+        for transaction in transactions {
+            if transaction.transactionState == .purchased {
+                // user payment succesful - finish transaction
+                SKPaymentQueue.default().finishTransaction(transaction)
+            }
+            else if transaction.transactionState == .failed {
+                // catch the error
+                if let error = transaction.error{
+                    // catch the localized description
+                    let errorDescription = error.localizedDescription
+                    print("Transaction failed due to error : \(errorDescription)")
+                }
+                SKPaymentQueue.default().finishTransaction(transaction)
+                
+            }
+        }
+    }
+        
+        @IBAction func restorePressed(_ sender: UIBarButtonItem) {
+            
+        }
+        
         
     }
-
-
-}
