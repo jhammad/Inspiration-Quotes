@@ -3,7 +3,6 @@ import StoreKit // framework  of the StoreKit
 
 class QuoteTableViewController: UITableViewController, SKPaymentTransactionObserver { // SKPaymentTransactionObserver StoreKit protocol
     
-    
     let productID = "string of the productID of the developer"
     
     var quotesToShow = [
@@ -29,13 +28,23 @@ class QuoteTableViewController: UITableViewController, SKPaymentTransactionObser
         // Add the current view controller as an observer to the default SKPaymentQueue.
         // SKPaymentQueue is responsible for managing and processing in-app purchases.
         SKPaymentQueue.default().add(self)
+        // if user already purchased the quotes they will show
+        if isPurchased() {
+            showPremiumQuotes()
+        }
     }
     
     // MARK: - Table view data source - to show the quotes
     // assign number of cells
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // return number of quotes
-        return quotesToShow.count + 1
+        if isPurchased() {
+            // don't show last cell with purchase option if player already bought quotes
+            return quotesToShow.count
+        }
+        else {
+            // return number of quotes
+            return quotesToShow.count + 1
+        }
     }
     // show quotes in the cells
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -47,6 +56,10 @@ class QuoteTableViewController: UITableViewController, SKPaymentTransactionObser
             cell.textLabel?.text = quotesToShow[indexPath.row]
             // assign the number of lines to 0 in case is needed more than 1 line of text
             cell.textLabel?.numberOfLines = 0
+            // black text for the quotes
+            cell.textLabel?.textColor = UIColor.black
+            // no accessory type
+            cell.accessoryType = .none
         }
         else {
             cell.textLabel?.text = "Get more quotes" // if there are more text for the last cell
@@ -87,6 +100,11 @@ class QuoteTableViewController: UITableViewController, SKPaymentTransactionObser
         for transaction in transactions {
             if transaction.transactionState == .purchased {
                 // user payment succesful - finish transaction
+                // function to show premium quotes
+                showPremiumQuotes()
+                // using the UserDefaults storage to check if the user already did the purchase in the past
+                UserDefaults.standard.set(true, forKey: productID)
+                // end transaction
                 SKPaymentQueue.default().finishTransaction(transaction)
             }
             else if transaction.transactionState == .failed {
@@ -96,15 +114,37 @@ class QuoteTableViewController: UITableViewController, SKPaymentTransactionObser
                     let errorDescription = error.localizedDescription
                     print("Transaction failed due to error : \(errorDescription)")
                 }
+                // end transaction
                 SKPaymentQueue.default().finishTransaction(transaction)
                 
             }
+        }
+    }
+    // func to show Premium Quotes
+    func showPremiumQuotes() {
+        // append the premiumQuotes to our quotes to show
+        quotesToShow.append(contentsOf: premiumQuotes)
+        tableView.reloadData()
+    }
+    
+    // func  to check if the user already purchased the quotes
+    func isPurchased() -> Bool {
+        
+        let purchaseStatus = UserDefaults.standard.bool(forKey: productID)
+        // if already bought it
+        if purchaseStatus {
+            print ("Previously purchased")
+            return true
+        }
+        // if not
+        else {
+            print("Never purchased")
+            return false
         }
     }
         
         @IBAction func restorePressed(_ sender: UIBarButtonItem) {
             
         }
-        
         
     }
